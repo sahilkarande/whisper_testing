@@ -1,0 +1,132 @@
+/* Base and Body */
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', sans-serif;
+  background: radial-gradient(circle at 68% 20%, #818cf8 0, #ddd6fe 60%, #fafafa 100%);
+}
+
+html.dark, body.dark {
+  background: #1a202c;
+}
+
+/* App Root Container */
+#app-root {
+  min-height: 100vh;
+  min-width: 100vw;
+  max-width: 1800px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Glass effect container */
+.glassify {
+  background: rgba(255,255,255,0.82);
+  border-radius: 1.3rem;
+  box-shadow: 0 8px 32px 0 rgba(31,38,135,.12);
+  backdrop-filter: blur(8px);
+  border: 1.5px solid rgba(255,255,255,0.19);
+  transition: background-color 0.3s ease;
+}
+
+html.dark .glassify {
+  background: rgba(31,41,55,0.7);
+  border-color: rgba(255,255,255,0.1);
+  box-shadow: 0 8px 32px 0 rgba(0,0,0,.7);
+}
+
+/* Match Highlighting */
+.match {
+  background: #d1fae5;
+  border-radius: .375rem;
+  padding: 2px 6px;
+}
+
+.mismatch {
+  background: #fee2e2;
+  text-decoration: line-through;
+  border-radius: .375rem;
+  padding: 2px 6px;
+}
+
+.insertion {
+  background: #bfdbfe;
+  border-radius: .375rem;
+  padding: 2px 6px;
+}
+
+/* Status icons pulse animation */
+.processing-indicator > span[data-feather="loader"] {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Scrollbar styling for Mac/modern browsers */
+#transcriptionOutput::-webkit-scrollbar,
+#manualInput::-webkit-scrollbar,
+#comparisonResult::-webkit-scrollbar,
+#historyList::-webkit-scrollbar,
+#notesInput::-webkit-scrollbar,
+#customTableArea::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+#transcriptionOutput::-webkit-scrollbar-thumb,
+#manualInput::-webkit-scrollbar-thumb,
+#comparisonResult::-webkit-scrollbar-thumb,
+#historyList::-webkit-scrollbar-thumb,
+#notesInput::-webkit-scrollbar-thumb,
+#customTableArea::-webkit-scrollbar-thumb {
+  background-color: rgba(100,116,139,0.6);
+  border-radius: 10px;
+}
+
+/* Editable table cell styles */
+.editable-cell {
+  border: 1px solid #cbd5e1; /* gray-300 */
+  padding: 0.3rem;
+  min-width: 60px;
+  min-height: 36px;
+  text-align: center;
+  outline: none;
+  border-radius: 0.25rem;
+  user-select: text;
+  background-color: white;
+  color: #111827; /* gray-900 */
+  transition: box-shadow 0.15s ease-in-out;
+}
+
+.editable-cell:focus {
+  box-shadow: 0 0 0 2px #6366f1; /* indigo-500 */
+  border-color: #6366f1;
+  background-color: white;
+  color: #111827;
+}
+
+html.dark .editable-cell {
+  background-color: #1f2937; /* gray-800 */
+  color: #e5e7eb; /* gray-200 */
+  border-color: #374151; /* gray-700 */
+}
+
+html.dark .editable-cell:focus {
+  box-shadow: 0 0 0 2px #818cf8; /* indigo-400 */
+  border-color: #818cf8;
+  background-color: #1f2937;
+  color: #e5e7eb;
+}
+
+.max-w-2xl {
+  max-width: 92rem;
+}
