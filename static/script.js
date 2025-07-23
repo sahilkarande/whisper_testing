@@ -179,24 +179,25 @@ function stopRecording(){
 }
 
 // Send audio to backend with token auth
-async function sendAudioToServer(audioBlob) {
+async function sendAudioToServer(audioBlob){
   const token = localStorage.getItem('access_token');
-  if (!token) {
-    alert('Please login first.');
-    window.location.href = '/login';
-    return;
-  }
+  fetch('/api/history', {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  })
+
+
   const formData = new FormData();
   formData.append('audio', audioBlob, 'recording.webm');
   formData.append('manual_text', manualInput.value || '');
-  const response = await fetch('/transcribe', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${token}`
-    },
-    body: formData
-  });
 
+  try {
+    const response = await fetch('/transcribe', { 
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}` },
+      body: formData 
+    });
     transcriptionOutput.innerHTML = '';
     if(response.ok){
       const data = await response.json();
