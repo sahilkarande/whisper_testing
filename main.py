@@ -18,7 +18,7 @@ from difflib import SequenceMatcher
 
 
 # Config
-SECRET_KEY = "your-very-secure-secret-key"  # Change for production! Keep secret.
+SECRET_KEY = "abc123"  # Change for production! Keep secret.
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
@@ -34,7 +34,7 @@ templates = Jinja2Templates(directory="templates")
 db = pymysql.connect(
     host="localhost",
     user="root",
-    password="",
+    password="Miemesmifuture@2001",
     database="whisperdb",
     cursorclass=pymysql.cursors.DictCursor,
     autocommit=False
@@ -170,9 +170,20 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     )
     return {"access_token": access_token, "token_type": "bearer"}
 
+# Public login page at '/'
 @app.get("/", response_class=HTMLResponse)
-async def homepage(request: Request, current_user: dict = Depends(get_current_user)):
+async def login_page(request: Request):
+    return templates.TemplateResponse("login.html", {"request": request})
+
+# Authenticated main app at '/app'
+@app.get("/app", response_class=HTMLResponse)
+async def app_home(request: Request, current_user: dict = Depends(get_current_user)):
     return templates.TemplateResponse("index.html", {"request": request, "user": current_user})
+
+@app.get("/index", response_class=HTMLResponse)
+async def app_home(request: Request, current_user: dict = Depends(get_current_user)):
+    return templates.TemplateResponse("index.html", {"request": request, "user": current_user})
+
 
 @app.post("/transcribe")
 async def transcribe(

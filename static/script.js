@@ -41,9 +41,19 @@ let processingStartTime = null;
 let recordingStartTime = null;
 let recordingTimerInterval = null;
 
+// --- Auth Utility ---
+function ensureAuthenticated() {
+  const token = localStorage.getItem('access_token');
+  if (!token) {
+    window.location.href = '/login';
+    return false;
+  }
+  return token;
+}
+
 // --- Dark Mode ---
 function initDarkMode() {
-  if(localStorage.getItem('theme') === 'dark'){
+  if (localStorage.getItem('theme') === 'dark') {
     document.documentElement.classList.add('dark');
     darkModeToggle.checked = true;
   } else {
@@ -53,13 +63,13 @@ function initDarkMode() {
 }
 initDarkMode();
 
-darkModeToggle.onchange = function() {
-  if(this.checked){
+darkModeToggle.onchange = function () {
+  if (this.checked) {
     document.documentElement.classList.add('dark');
-    localStorage.setItem('theme','dark');
+    localStorage.setItem('theme', 'dark');
   } else {
     document.documentElement.classList.remove('dark');
-    localStorage.setItem('theme','light');
+    localStorage.setItem('theme', 'light');
   }
 };
 
@@ -69,7 +79,7 @@ toggleSettingsButton.onclick = () => {
 };
 
 // Timer functions
-function startTimer(){
+function startTimer() {
   recordingStartTime = Date.now();
   timer.textContent = "Recording: 0.00s";
   recordingTimerInterval = setInterval(() => {
@@ -77,19 +87,19 @@ function startTimer(){
     timer.textContent = `Recording: ${elapsed}s`;
   }, 100);
 }
-function stopTimer(){
+function stopTimer() {
   clearInterval(recordingTimerInterval);
 }
 
 // UI recording state updates
-function updateUIForRecording(isRecording){
+function updateUIForRecording(isRecording) {
   startButton.disabled = isRecording;
   stopButton.disabled = !isRecording;
   compareButton.disabled = true;
   compareButton.classList.add('opacity-50', 'cursor-not-allowed');
   compareButton.setAttribute('aria-disabled', 'true');
   comparisonSection.classList.add('hidden');
-  if(isRecording) {
+  if (isRecording) {
     statusDiv.innerHTML = '<span data-feather="mic"></span> Recording... Press <b>Stop</b> when finished.';
     transcriptionOutput.innerHTML = '<p class="text-gray-400 dark:text-gray-500 italic select-text">Your final transcription will appear here.</p>';
     updateTranscriptionWordCount();
@@ -104,7 +114,7 @@ function displayAudioPlayer(blob) {
   audioPlayer.load();
 }
 
-deleteAudioBtn.onclick = function(){
+deleteAudioBtn.onclick = function () {
   audioSection.style.display = "none";
   audioPlayer.src = "";
   audioBlob = null;
@@ -145,21 +155,21 @@ function escapeHtml(text) {
 async function startRecording() {
   startTimer();
   try {
-    stream = await navigator.mediaDevices.getUserMedia({audio:true});
+    stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     updateUIForRecording(true);
     audioChunks = [];
-    mediaRecorder = new MediaRecorder(stream, {mimeType: 'audio/webm'});
+    mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
     mediaRecorder.ondataavailable = e => e.data.size > 0 && audioChunks.push(e.data);
     mediaRecorder.onstop = () => {
       stopTimer();
-      audioBlob = new Blob(audioChunks, {type: 'audio/webm'});
+      audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
       displayAudioPlayer(audioBlob);
       processingStartTime = Date.now();
       timer.textContent = "Processing transcription...";
       sendAudioToServer(audioBlob);
     };
     mediaRecorder.start();
-  } catch(err){
+  } catch (err) {
     statusDiv.innerHTML = '<span data-feather="alert-triangle"></span> Error: Could not access microphone.';
     statusDiv.classList.remove('processing-indicator');
     updateUIForRecording(false);
@@ -168,8 +178,8 @@ async function startRecording() {
 }
 
 // Stop recording
-function stopRecording(){
-  if(mediaRecorder && mediaRecorder.state !== 'inactive'){
+function stopRecording() {
+  if (mediaRecorder && mediaRecorder.state !== 'inactive') {
     mediaRecorder.stop();
     updateUIForRecording(false);
     statusDiv.innerHTML = '<span data-feather="loader"></span> Processing audio...';
@@ -179,31 +189,30 @@ function stopRecording(){
 }
 
 // Send audio to backend with token auth
-async function sendAudioToServer(audioBlob){
-  const token = localStorage.getItem('access_token');
-  fetch('/api/history', {
-    headers: {
-      'Authorization': `Bearer ${token}`
-    }
-  })
-
-
+async function sendAudioToServer(audioBlob) {
+  const token = ensureAuthenticated();
+  if (!token) return;
   const formData = new FormData();
   formData.append('audio', audioBlob, 'recording.webm');
   formData.append('manual_text', manualInput.value || '');
 
   try {
-    const response = await fetch('/transcribe', { 
+    const response = await fetch('/transcribe', {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${token}` },
-      body: formData 
+      body: formData
     });
+    if (response.status === 401 || response.status === 403) {
+      localStorage.removeItem('access_token');
+      window.location.href = '/login';
+      return;
+    }
     transcriptionOutput.innerHTML = '';
-    if(response.ok){
+    if (response.ok) {
       const data = await response.json();
       const newText = data.transcription ? data.transcription.trim() : "";
       setTranscriptionText(newText);
-      if(newText){
+      if (newText) {
         compareButton.disabled = false;
         compareButton.classList.remove('opacity-50', 'cursor-not-allowed');
         compareButton.setAttribute('aria-disabled', 'false');
@@ -221,7 +230,7 @@ async function sendAudioToServer(audioBlob){
     appendError(transcriptionOutput, "Network Error: Could not connect.");
     setTranscriptionText('');
   } finally {
-    const elapsedTime = ((Date.now() - processingStartTime)/1000).toFixed(2);
+    const elapsedTime = ((Date.now() - processingStartTime) / 1000).toFixed(2);
     timer.textContent = `Processing Time: ${elapsedTime}s`;
     statusDiv.innerHTML = '<span data-feather="check-circle"></span> Ready! Press Start to record again.';
     statusDiv.classList.remove('processing-indicator');
@@ -232,7 +241,7 @@ async function sendAudioToServer(audioBlob){
 // Compare manual and transcribed text logic
 compareButton.onclick = () => {
   const manualText = manualInput.value.trim();
-  if(!transcribedText || !manualText){
+  if (!transcribedText || !manualText) {
     alert("Please enter both transcribed and manual text.");
     return;
   }
@@ -245,13 +254,13 @@ compareButton.onclick = () => {
   const manualWords = manualText.split(/\s+/);
 
   let highlightedHtml = "";
-  for(let i = 0; i < Math.max(transcribedWords.length, manualWords.length); i++){
+  for (let i = 0; i < Math.max(transcribedWords.length, manualWords.length); i++) {
     const tWord = transcribedWords[i];
     const mWord = manualWords[i];
-    if(tWord === mWord) highlightedHtml += `<span class="match">${mWord || ''}</span> `;
-    else if(mWord && !tWord) highlightedHtml += `<span class="insertion">${mWord}</span> `;
-    else if(tWord && !mWord) highlightedHtml += `<span class="mismatch">${tWord}</span> `;
-    else if(tWord && mWord) highlightedHtml += `<span class="mismatch">${tWord}</span> <span class="insertion">(${mWord})</span> `;
+    if (tWord === mWord) highlightedHtml += `<span class="match">${mWord || ''}</span> `;
+    else if (mWord && !tWord) highlightedHtml += `<span class="insertion">${mWord}</span> `;
+    else if (tWord && !mWord) highlightedHtml += `<span class="mismatch">${tWord}</span> `;
+    else if (tWord && mWord) highlightedHtml += `<span class="mismatch">${tWord}</span> <span class="insertion">(${mWord})</span> `;
   }
   comparisonResult.innerHTML = `
     <div class="mb-2">
@@ -266,12 +275,12 @@ compareButton.onclick = () => {
 };
 
 // Levenshtein distance calculation
-function levenshteinDistance(a, b){
+function levenshteinDistance(a, b) {
   const m = Array(b.length + 1).fill(null).map(() => Array(a.length + 1).fill(null));
-  for(let i = 0; i <= a.length; i++) m[0][i] = i;
-  for(let j = 0; j <= b.length; j++) m[j][0] = j;
-  for(let j = 1; j <= b.length; j++){
-    for(let i = 1; i <= a.length; i++){
+  for (let i = 0; i <= a.length; i++) m[0][i] = i;
+  for (let j = 0; j <= b.length; j++) m[j][0] = j;
+  for (let j = 1; j <= b.length; j++) {
+    for (let i = 1; i <= a.length; i++) {
       const indicator = a[i - 1] === b[j - 1] ? 0 : 1;
       m[j][i] = Math.min(
         m[j][i - 1] + 1,
@@ -283,7 +292,7 @@ function levenshteinDistance(a, b){
   return m[b.length][a.length];
 }
 
-function appendError(el, msg){
+function appendError(el, msg) {
   el.innerHTML = `<p class="text-red-600 font-bold flex items-center gap-1 select-text"><span data-feather="alert-triangle"></span>${msg}</p>`;
   feather.replace();
 }
@@ -297,7 +306,6 @@ clearTranscriptionButton.onclick = () => {
   comparisonSection.classList.add('hidden');
   updateTranscriptionWordCount();
 };
-
 clearManualInputButton.onclick = () => {
   manualInput.value = "";
   updateManualWordCount();
@@ -306,7 +314,6 @@ clearManualInputButton.onclick = () => {
   compareButton.classList.add('opacity-50', 'cursor-not-allowed');
   compareButton.setAttribute('aria-disabled', 'true');
 };
-
 manualInput.addEventListener('input', () => {
   updateManualWordCount();
   const enabled = manualInput.value.trim() && transcribedText;
@@ -315,7 +322,6 @@ manualInput.addEventListener('input', () => {
   compareButton.classList.toggle('cursor-not-allowed', !enabled);
   compareButton.setAttribute('aria-disabled', !enabled ? 'true' : 'false');
 });
-
 startButton.onclick = startRecording;
 stopButton.onclick = stopRecording;
 
@@ -339,17 +345,17 @@ closeAbout.onclick = () => {
   }, 200);
 };
 aboutModal.addEventListener('click', e => {
-  if(e.target === aboutModal) closeAbout.onclick();
+  if (e.target === aboutModal) closeAbout.onclick();
 });
 
 // Copy/download buttons
 copyTranscriptionBtn.onclick = () => {
-  if(!transcribedText.trim()) return alert("No transcription to copy.");
+  if (!transcribedText.trim()) return alert("No transcription to copy.");
   navigator.clipboard.writeText(transcribedText).then(() => alert("Transcription copied to clipboard!"));
 };
 downloadTranscriptionBtn.onclick = () => {
-  if(!transcribedText.trim()) return alert("No transcription to download.");
-  const blob = new Blob([transcribedText], {type: 'text/plain'});
+  if (!transcribedText.trim()) return alert("No transcription to download.");
+  const blob = new Blob([transcribedText], { type: 'text/plain' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -361,7 +367,7 @@ downloadTranscriptionBtn.onclick = () => {
 };
 copyComparisonBtn.onclick = () => {
   const compText = comparisonResult.innerText.trim();
-  if(!compText) return alert("No comparison result to copy.");
+  if (!compText) return alert("No comparison result to copy.");
   navigator.clipboard.writeText(compText).then(() => alert("Comparison result copied to clipboard!"));
 };
 
@@ -369,12 +375,11 @@ copyComparisonBtn.onclick = () => {
 const NOTES_STORAGE_KEY = 'whisperAnalyzerNotes';
 function loadNotes() {
   const saved = localStorage.getItem(NOTES_STORAGE_KEY);
-  if(saved) notesInput.value = saved;
+  if (saved) notesInput.value = saved;
 }
 function saveNotes() {
   localStorage.setItem(NOTES_STORAGE_KEY, notesInput.value);
 }
-loadNotes();
 notesInput.addEventListener('input', saveNotes);
 
 // Custom table implementation
@@ -394,13 +399,12 @@ function createCell(row, col) {
   });
   return td;
 }
-
 function renderTable() {
   const tbody = customTable.querySelector('tbody');
   tbody.innerHTML = "";
-  for(let r=0; r < tableRowCount; r++) {
+  for (let r = 0; r < tableRowCount; r++) {
     const tr = document.createElement('tr');
-    for(let c=0; c < tableColCount; c++) {
+    for (let c = 0; c < tableColCount; c++) {
       tr.appendChild(createCell(r, c));
     }
     tbody.appendChild(tr);
@@ -409,28 +413,29 @@ function renderTable() {
 renderTable();
 
 addRowBtn.onclick = () => { tableRowCount++; renderTable(); };
-removeRowBtn.onclick = () => { if(tableRowCount>1) {tableRowCount--; renderTable();}};
+removeRowBtn.onclick = () => { if (tableRowCount > 1) { tableRowCount--; renderTable(); } };
 addColBtn.onclick = () => { tableColCount++; renderTable(); };
-removeColBtn.onclick = () => { if(tableColCount > 1) {tableColCount--; renderTable(); }};
+removeColBtn.onclick = () => { if (tableColCount > 1) { tableColCount--; renderTable(); } };
 
-// Load history
+// Load history (protected)
 function loadHistory() {
-  const token = localStorage.getItem('access_token');
-  if (!token) {
-    window.location.href = '/login';
-    return;
-  }
-
+  const token = ensureAuthenticated();
+  if (!token) return;
   fetch('/api/history?limit=10', {
     headers: { 'Authorization': `Bearer ${token}` }
   }).then(response => {
+    if (response.status === 401 || response.status === 403) {
+      localStorage.removeItem('access_token');
+      window.location.href = '/login';
+      return;
+    }
     if (!response.ok) throw new Error('Failed to fetch');
     return response.json();
   }).then(data => renderHistory(data))
-  .catch(err => {
-    tbody.innerHTML = `<tr><td colspan="5" class="text-center text-red-600 p-4">Error loading history</td></tr>`;
-    console.error(err);
-  });
+    .catch(err => {
+      tbody.innerHTML = `<tr><td colspan="5" class="text-center text-red-600 p-4">Error loading history</td></tr>`;
+      console.error(err);
+    });
 }
 
 // Render history table data
@@ -458,30 +463,41 @@ function renderHistory(entries) {
 
 // Delete history handler (event delegation)
 tbody.addEventListener('click', async (e) => {
-  if(e.target.classList.contains('delete-history-btn')){
+  if (e.target.classList.contains('delete-history-btn')) {
     const id = e.target.getAttribute('data-id');
-    if(confirm('Are you sure you want to delete this record?')){
+    if (confirm('Are you sure you want to delete this record?')) {
       try {
-        const token = localStorage.getItem('access_token');
+        const token = ensureAuthenticated();
+        if (!token) return;
         const res = await fetch(`/api/history/${id}`, {
           method: 'DELETE',
           headers: { 'Authorization': `Bearer ${token}` }
         });
+        if (res.status === 401 || res.status === 403) {
+          localStorage.removeItem('access_token');
+          window.location.href = '/login';
+          return;
+        }
         if (res.ok) {
           loadHistory();
         } else {
           alert('Delete failed');
         }
-      } catch(err) {
+      } catch (err) {
         alert('Network error');
       }
     }
   }
 });
 
-// Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
+  if (!localStorage.getItem('access_token')) {
+    window.location.href = '/login';
+    return;
+  }
+  feather.replace();
   loadHistory();
   loadNotes();
 });
+
 

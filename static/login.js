@@ -20,18 +20,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (res.ok) {
         const data = await res.json();
-        // Save the JWT token in localStorage for future API calls
         localStorage.setItem('access_token', data.access_token);
         message.style.color = 'green';
         message.textContent = 'Login successful! Redirecting...';
 
         setTimeout(() => {
-          window.location.href = '/'; // Redirect to your main app page
+          window.location.href = '/index';  // Redirect to your main authenticated app page
         }, 1000);
       } else {
         const err = await res.json();
         message.style.color = 'red';
-        // If wrong credentials, suggest signup link
         if (err.detail && err.detail.toLowerCase().includes('incorrect')) {
           message.innerHTML = `Login failed: ${err.detail}.<br>Don't have an account? <a href="/signup" class="text-indigo-600 hover:underline">Sign up here</a>.`;
         } else {
