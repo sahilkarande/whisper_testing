@@ -1,7 +1,0 @@
-fastapi
-uvicorn[standard]
-whisper
-torch
-ffmpeg-python
-aiofiles     
-

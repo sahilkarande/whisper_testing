@@ -1,11 +1,9 @@
-/* Base and Body */
 html, body {
   height: 100%;
   margin: 0;
   padding: 0;
   font-family: 'Inter', sans-serif;
   background: radial-gradient(circle at 68% 20%, #818cf8 0, #ddd6fe 60%, #fafafa 100%);
-  font-size: 11px; /* Smaller base font */
 }
 
 html.dark, body.dark {
@@ -20,47 +18,42 @@ html.dark, body.dark {
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  font-size: 13px; /* Consistent smaller font */
 }
 
 /* Glass effect container */
 .glassify {
   background: rgba(255,255,255,0.82);
-  border-radius: 1rem;
-  box-shadow: 0 6px 24px 0 rgba(31,38,135,.12);
-  backdrop-filter: blur(6px);
-  border: 1.2px solid rgba(255,255,255,0.16);
+  border-radius: 1.3rem;
+  box-shadow: 0 8px 32px 0 rgba(31,38,135,.12);
+  backdrop-filter: blur(8px);
+  border: 1.5px solid rgba(255,255,255,0.19);
   transition: background-color 0.3s ease;
 }
 
-/* Dark mode glass */
 html.dark .glassify {
   background: rgba(31,41,55,0.7);
-  border-color: rgba(255,255,255,0.07);
-  box-shadow: 0 6px 24px 0 rgba(0,0,0,.6);
+  border-color: rgba(255,255,255,0.1);
+  box-shadow: 0 8px 32px 0 rgba(0,0,0,.7);
 }
 
 /* Match Highlighting */
 .match {
   background: #d1fae5;
-  border-radius: .25rem;
-  padding: 1px 4px;
-  font-size: 12px;
+  border-radius: .375rem;
+  padding: 2px 6px;
 }
 
 .mismatch {
   background: #fee2e2;
   text-decoration: line-through;
-  border-radius: .25rem;
-  padding: 1px 4px;
-  font-size: 12px;
+  border-radius: .375rem;
+  padding: 2px 6px;
 }
 
 .insertion {
   background: #bfdbfe;
-  border-radius: .25rem;
-  padding: 1px 4px;
-  font-size: 12px;
+  border-radius: .375rem;
+  padding: 2px 6px;
 }
 
 /* Status icons pulse animation */
@@ -69,19 +62,23 @@ html.dark .glassify {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg) }
-  100% { transform: rotate(360deg) }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
-/* Scrollbar styling */
+/* Scrollbar styling for Mac/modern browsers */
 #transcriptionOutput::-webkit-scrollbar,
 #manualInput::-webkit-scrollbar,
 #comparisonResult::-webkit-scrollbar,
 #historyList::-webkit-scrollbar,
 #notesInput::-webkit-scrollbar,
 #customTableArea::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
 }
 
 #transcriptionOutput::-webkit-scrollbar-thumb,
@@ -90,200 +87,45 @@ html.dark .glassify {
 #historyList::-webkit-scrollbar-thumb,
 #notesInput::-webkit-scrollbar-thumb,
 #customTableArea::-webkit-scrollbar-thumb {
-  background-color: rgba(100,116,139,0.5);
+  background-color: rgba(100,116,139,0.6);
   border-radius: 10px;
 }
 
-/* Editable table cells */
+/* Editable table cell styles */
 .editable-cell {
-  border: 1px solid #cbd5e1;
-  padding: 0.15rem 0.4rem;
-  min-width: 50px;
-  min-height: 28px;
+  border: 1px solid #cbd5e1; /* gray-300 */
+  padding: 0.3rem;
+  min-width: 60px;
+  min-height: 36px;
   text-align: center;
   outline: none;
   border-radius: 0.25rem;
   user-select: text;
   background-color: white;
-  color: #111827;
-  font-size: 12px;
+  color: #111827; /* gray-900 */
   transition: box-shadow 0.15s ease-in-out;
 }
 
 .editable-cell:focus {
-  box-shadow: 0 0 0 2px #6366f1;
+  box-shadow: 0 0 0 2px #6366f1; /* indigo-500 */
   border-color: #6366f1;
   background-color: white;
   color: #111827;
 }
 
 html.dark .editable-cell {
-  background-color: #1f2937;
-  color: #e5e7eb;
-  border-color: #374151;
+  background-color: #1f2937; /* gray-800 */
+  color: #e5e7eb; /* gray-200 */
+  border-color: #374151; /* gray-700 */
 }
 
 html.dark .editable-cell:focus {
-  box-shadow: 0 0 0 2px #818cf8;
+  box-shadow: 0 0 0 2px #818cf8; /* indigo-400 */
   border-color: #818cf8;
   background-color: #1f2937;
   color: #e5e7eb;
 }
 
-/* Max width helper */
 .max-w-2xl {
-  max-width: 80rem; /* reduced from 92rem for compact */
-}
-
-/* History Section container */
-#historySection {
-  background-color: rgba(255, 255, 255, 0.9);
-  border-radius: 0.75rem;
-  border: 1.2px solid rgba(156, 163, 175, 0.25);
-  padding: 0.75rem;
-  max-height: 12rem; /* ~192px condensed */
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  box-shadow:
-    0 8px 12px -4px rgba(99, 102, 241, 0.07),
-    0 3px 5px -5px rgba(99, 102, 241, 0.07);
-  font-size: 12px;
-}
-
-/* History Table */
-#historyTable {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 12px;
-  color: #374151;
-  font-family: 'Inter', sans-serif;
-}
-
-
-/* Sticky table header */
-#historyTable thead th {
-  position: sticky;
-  top: 0;
-  background-color: #f3f4f6;
-  color: #4338ca;
-  font-weight: 700;
-  border-bottom: 1.5px solid #6366f1;
-  padding: 0.3rem 0.4rem;
-  text-align: left;
-  z-index: 10;
-}
-
-/* Table body rows */
-#historyTable tbody tr {
-  border-bottom: 1px solid #e5e7eb;
-  transition: background-color 0.15s ease;
-  cursor: default;
-}
-
-/* Row hover */
-#historyTable tbody tr:hover {
-  background-color: #e0e7ff;
-}
-
-/* Table body cells */
-#historyTable tbody td {
-  padding: 0.3rem 0.4rem;
-  vertical-align: top;
-  word-break: break-word;
-}
-
-/* Alternate row backgrounds */
-#historyTable tbody tr:nth-child(even) {
-  background-color: #f9fafb;
-}
-
-/* Delete button styling */
-.delete-history-btn {
-  background-color: #ef4444;
-  color: #fff;
-  border: none;
-  border-radius: 0.2rem;
-  padding: 0.15rem 0.5rem;
-  cursor: pointer;
-  font-size: 11px;
-  transition: background-color 0.15s ease;
-}
-
-.delete-history-btn:hover {
-  background-color: #b91c1c;
-}
-
-/* Dark mode overrides */
-html.dark #historySection {
-  background-color: rgba(31, 41, 55, 0.7);
-  border-color: rgba(147, 197, 253, 0.25);
-  box-shadow:
-    0 8px 12px -4px rgba(147, 197, 253, 0.12),
-    0 3px 5px -5px rgba(147, 197, 253, 0.12);
-}
-
-html.dark #historyTable {
-  color: #bfdbfe;
-}
-
-html.dark #historyTable thead th {
-  background-color: #1e40af;
-  color: #d6bcfa;
-  border-bottom-color: #4338ca;
-}
-
-html.dark #historyTable tbody tr:hover {
-  background-color: #4338ca;
-  color: white;
-}
-
-html.dark #historyTable tbody tr:nth-child(even) {
-  background-color: #1e293b;
-}
-html.dark .delete-history-btn {
-  background-color: #dc2626;
-}
-html.dark .delete-history-btn:hover {
-  background-color: #b91c1c;
-}
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  #app-root {
-    padding: 0.5rem;
-  }
-
-  #historySection {
-    max-height: 200px; /* Increased for better visibility on smaller screens */
-  }
-
-  #historyTable thead th, #historyTable tbody td {
-    font-size: 11px; /* Slightly smaller for mobile */
-    padding: 0.2rem 0.3rem;
-  }
-
-  .delete-history-btn {
-    font-size: 10px; /* Smaller button text */
-    padding: 0.1rem 0.4rem;
-  }
-}
-/* Custom table area */
-#customTableArea {
-  background-color: rgba(255, 255, 255, 0.9);
-  border-radius: 0.75rem;
-  border: 1.2px solid rgba(156, 163, 175, 0.25);
-  padding: 0.75rem;
-  max-height: 12rem; /* ~192px condensed */
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  box-shadow:
-    0 8px 12px -4px rgba(99, 102, 241, 0.07),
-    0 3px 5px -5px rgba(99, 102, 241, 0.07);
-}
-/* Custom table header */
-#customTableArea h2 {
-  font-size: 14px;
-  color: #1f2937;
-  margin-bottom: 0.5rem;
+  max-width: 92rem;
 }

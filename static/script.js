@@ -11,9 +11,13 @@ const comparisonSection = document.getElementById('comparisonSection');
 const comparisonResult = document.getElementById('comparisonResult');
 const clearTranscriptionButton = document.getElementById('clearTranscriptionButton');
 const clearManualInputButton = document.getElementById('clearManualInputButton');
+const historyList = document.getElementById('historyList');
 const audioSection = document.getElementById('audioSection');
 const audioPlayer = document.getElementById('audioPlayer');
 const deleteAudioBtn = document.getElementById('deleteAudioBtn');
+const openAboutBtn = document.getElementById('openAboutBtn');
+const aboutModal = document.getElementById('aboutModal');
+const closeAbout = document.getElementById('closeAbout');
 const darkModeToggle = document.getElementById('darkModeToggle');
 const toggleSettingsButton = document.getElementById('toggleSettings');
 const settingsPanel = document.getElementById('settingsPanel');
@@ -25,35 +29,25 @@ const downloadTranscriptionBtn = document.getElementById('downloadTranscriptionB
 const copyComparisonBtn = document.getElementById('copyComparisonBtn');
 const notesInput = document.getElementById('notesInput');
 
+// Custom Table elements
 const customTable = document.getElementById('customTable');
 const addRowBtn = document.getElementById('addRowBtn');
 const removeRowBtn = document.getElementById('removeRowBtn');
 const addColBtn = document.getElementById('addColBtn');
 const removeColBtn = document.getElementById('removeColBtn');
 
-const tbody = document.getElementById("historyTableBody");
-
 let mediaRecorder, stream;
 let audioChunks = [];
 let transcribedText = "";
 let audioBlob = null;
-let processingStartTime = null;
+let history = [];
 let recordingStartTime = null;
+let processingStartTime = null;
 let recordingTimerInterval = null;
 
-// --- Auth Utility ---
-function ensureAuthenticated() {
-  const token = localStorage.getItem('access_token');
-  if (!token) {
-    window.location.href = '/login';
-    return false;
-  }
-  return token;
-}
-
-// --- Dark Mode ---
+// DARK MODE - persisted
 function initDarkMode() {
-  if (localStorage.getItem('theme') === 'dark') {
+  if(localStorage.getItem('theme') === 'dark'){
     document.documentElement.classList.add('dark');
     darkModeToggle.checked = true;
   } else {
@@ -63,23 +57,23 @@ function initDarkMode() {
 }
 initDarkMode();
 
-darkModeToggle.onchange = function () {
-  if (this.checked) {
+darkModeToggle.onchange = function() {
+  if(this.checked){
     document.documentElement.classList.add('dark');
-    localStorage.setItem('theme', 'dark');
+    localStorage.setItem('theme','dark');
   } else {
     document.documentElement.classList.remove('dark');
-    localStorage.setItem('theme', 'light');
+    localStorage.setItem('theme','light');
   }
 };
 
-// Settings panel toggle
+// Toggle Settings Panel
 toggleSettingsButton.onclick = () => {
   settingsPanel.style.display = (settingsPanel.style.display === 'block') ? 'none' : 'block';
 };
 
-// Timer functions
-function startTimer() {
+// Timer helpers
+function startTimer(){
   recordingStartTime = Date.now();
   timer.textContent = "Recording: 0.00s";
   recordingTimerInterval = setInterval(() => {
@@ -87,19 +81,19 @@ function startTimer() {
     timer.textContent = `Recording: ${elapsed}s`;
   }, 100);
 }
-function stopTimer() {
+function stopTimer(){
   clearInterval(recordingTimerInterval);
 }
 
-// UI recording state updates
-function updateUIForRecording(isRecording) {
+// UI helpers
+function updateUIForRecording(isRecording){
   startButton.disabled = isRecording;
   stopButton.disabled = !isRecording;
   compareButton.disabled = true;
   compareButton.classList.add('opacity-50', 'cursor-not-allowed');
   compareButton.setAttribute('aria-disabled', 'true');
   comparisonSection.classList.add('hidden');
-  if (isRecording) {
+  if(isRecording) {
     statusDiv.innerHTML = '<span data-feather="mic"></span> Recording... Press <b>Stop</b> when finished.';
     transcriptionOutput.innerHTML = '<p class="text-gray-400 dark:text-gray-500 italic select-text">Your final transcription will appear here.</p>';
     updateTranscriptionWordCount();
@@ -107,20 +101,19 @@ function updateUIForRecording(isRecording) {
   }
 }
 
-// Audio playback display
 function displayAudioPlayer(blob) {
   audioSection.style.display = "flex";
   audioPlayer.src = URL.createObjectURL(blob);
   audioPlayer.load();
 }
 
-deleteAudioBtn.onclick = function () {
+deleteAudioBtn.onclick = function(){
   audioSection.style.display = "none";
   audioPlayer.src = "";
   audioBlob = null;
 };
 
-// Word count utils
+// Word count
 function countWords(text) {
   return text.trim() === "" ? 0 : text.trim().split(/\s+/).length;
 }
@@ -132,44 +125,53 @@ function updateManualWordCount() {
   manualWordCount.textContent = "Words: " + countWords(manualInput.value);
 }
 
-// Set transcription text and update count
+// Set transcription with updating word count and text
 function setTranscriptionText(text) {
   transcriptionOutput.innerHTML = `<p>${text || '<span class="text-gray-400 dark:text-gray-500 italic">No speech detected.</span>'}</p>`;
   transcribedText = text;
   updateTranscriptionWordCount();
 }
 
-// Escape HTML (to prevent XSS)
-function escapeHtml(text) {
-  if (!text) return '';
-  return text.replace(/[&<>"']/g, m => ({
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#039;'
-  })[m]);
+// History rendering
+function addToHistory(transcript, manual, score) {
+  history.unshift({ transcript, manual, score, timestamp: new Date().toLocaleTimeString() });
+  if(history.length > 8) history.pop();
+  renderHistory();
+}
+function renderHistory(){
+  if(!history.length){
+    historyList.innerHTML = '<li class="text-gray-400 dark:text-gray-500 italic select-text">No past transcriptions yet.</li>';
+    return;
+  }
+  historyList.innerHTML = "";
+  for(const entry of history){
+    historyList.innerHTML += `<li tabindex="0" class="py-1 px-2 border-l-4 border-violet-300 dark:border-violet-600 mb-1 rounded bg-gray-50 dark:bg-gray-700 shadow-sm select-text focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1">
+      <span class="font-semibold text-violet-700 dark:text-violet-300">${entry.score}%</span>
+      &mdash; <span class="text-xs text-gray-500 dark:text-gray-400 select-text">${entry.timestamp}</span><br/>
+      <span class="text-gray-700 dark:text-gray-100 select-text">${entry.transcript}</span>
+    </li>`;
+  }
 }
 
-// Start recording
+// Recording logic
 async function startRecording() {
   startTimer();
   try {
-    stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    stream = await navigator.mediaDevices.getUserMedia({audio:true});
     updateUIForRecording(true);
     audioChunks = [];
-    mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+    mediaRecorder = new MediaRecorder(stream, {mimeType: 'audio/webm'});
     mediaRecorder.ondataavailable = e => e.data.size > 0 && audioChunks.push(e.data);
     mediaRecorder.onstop = () => {
       stopTimer();
-      audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+      audioBlob = new Blob(audioChunks, {type: 'audio/webm'});
       displayAudioPlayer(audioBlob);
       processingStartTime = Date.now();
       timer.textContent = "Processing transcription...";
       sendAudioToServer(audioBlob);
     };
     mediaRecorder.start();
-  } catch (err) {
+  } catch(err){
     statusDiv.innerHTML = '<span data-feather="alert-triangle"></span> Error: Could not access microphone.';
     statusDiv.classList.remove('processing-indicator');
     updateUIForRecording(false);
@@ -177,9 +179,8 @@ async function startRecording() {
   }
 }
 
-// Stop recording
-function stopRecording() {
-  if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+function stopRecording(){
+  if(mediaRecorder && mediaRecorder.state !== 'inactive'){
     mediaRecorder.stop();
     updateUIForRecording(false);
     statusDiv.innerHTML = '<span data-feather="loader"></span> Processing audio...';
@@ -188,31 +189,17 @@ function stopRecording() {
   }
 }
 
-// Send audio to backend with token auth
-async function sendAudioToServer(audioBlob) {
-  const token = ensureAuthenticated();
-  if (!token) return;
+async function sendAudioToServer(audioBlob){
   const formData = new FormData();
   formData.append('audio', audioBlob, 'recording.webm');
-  formData.append('manual_text', manualInput.value || '');
-
   try {
-    const response = await fetch('/transcribe', {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${token}` },
-      body: formData
-    });
-    if (response.status === 401 || response.status === 403) {
-      localStorage.removeItem('access_token');
-      window.location.href = '/login';
-      return;
-    }
+    const response = await fetch('/transcribe', { method: 'POST', body: formData });
     transcriptionOutput.innerHTML = '';
-    if (response.ok) {
+    if(response.ok){
       const data = await response.json();
       const newText = data.transcription ? data.transcription.trim() : "";
       setTranscriptionText(newText);
-      if (newText) {
+      if(newText){
         compareButton.disabled = false;
         compareButton.classList.remove('opacity-50', 'cursor-not-allowed');
         compareButton.setAttribute('aria-disabled', 'false');
@@ -223,14 +210,14 @@ async function sendAudioToServer(audioBlob) {
       }
     } else {
       const errorData = await response.json();
-      appendError(transcriptionOutput, "Server Error: " + errorData.detail || errorData.error);
+      appendError(transcriptionOutput, "Server Error: " + errorData.error);
       setTranscriptionText('');
     }
   } catch {
     appendError(transcriptionOutput, "Network Error: Could not connect.");
     setTranscriptionText('');
   } finally {
-    const elapsedTime = ((Date.now() - processingStartTime) / 1000).toFixed(2);
+    const elapsedTime = ((Date.now() - processingStartTime)/1000).toFixed(2);
     timer.textContent = `Processing Time: ${elapsedTime}s`;
     statusDiv.innerHTML = '<span data-feather="check-circle"></span> Ready! Press Start to record again.';
     statusDiv.classList.remove('processing-indicator');
@@ -238,29 +225,29 @@ async function sendAudioToServer(audioBlob) {
   }
 }
 
-// Compare manual and transcribed text logic
+// Comparison logic
 compareButton.onclick = () => {
   const manualText = manualInput.value.trim();
-  if (!transcribedText || !manualText) {
+  if(!transcribedText || !manualText){
     alert("Please enter both transcribed and manual text.");
     return;
   }
   comparisonSection.classList.remove('hidden');
   const distance = levenshteinDistance(transcribedText.toLowerCase(), manualText.toLowerCase());
   const maxLength = Math.max(transcribedText.length, manualText.length);
-  const similarity = maxLength ? ((maxLength - distance) / maxLength) * 100 : 0;
+  const similarity = maxLength ? ((maxLength - distance) / maxLength)*100 : 0;
 
   const transcribedWords = transcribedText.split(/\s+/);
   const manualWords = manualText.split(/\s+/);
 
   let highlightedHtml = "";
-  for (let i = 0; i < Math.max(transcribedWords.length, manualWords.length); i++) {
+  for(let i=0; i < Math.max(transcribedWords.length, manualWords.length); i++){
     const tWord = transcribedWords[i];
     const mWord = manualWords[i];
-    if (tWord === mWord) highlightedHtml += `<span class="match">${mWord || ''}</span> `;
-    else if (mWord && !tWord) highlightedHtml += `<span class="insertion">${mWord}</span> `;
-    else if (tWord && !mWord) highlightedHtml += `<span class="mismatch">${tWord}</span> `;
-    else if (tWord && mWord) highlightedHtml += `<span class="mismatch">${tWord}</span> <span class="insertion">(${mWord})</span> `;
+    if(tWord === mWord) highlightedHtml += `<span class="match">${mWord || ''}</span> `;
+    else if(mWord && !tWord) highlightedHtml += `<span class="insertion">${mWord}</span> `;
+    else if(tWord && !mWord) highlightedHtml += `<span class="mismatch">${tWord}</span> `;
+    else if(tWord && mWord) highlightedHtml += `<span class="mismatch">${tWord}</span> <span class="insertion">(${mWord})</span> `;
   }
   comparisonResult.innerHTML = `
     <div class="mb-2">
@@ -273,31 +260,26 @@ compareButton.onclick = () => {
   addToHistory(transcribedText, manualText, similarity.toFixed(2));
   feather.replace();
 };
-
-// Levenshtein distance calculation
-function levenshteinDistance(a, b) {
-  const m = Array(b.length + 1).fill(null).map(() => Array(a.length + 1).fill(null));
-  for (let i = 0; i <= a.length; i++) m[0][i] = i;
-  for (let j = 0; j <= b.length; j++) m[j][0] = j;
-  for (let j = 1; j <= b.length; j++) {
-    for (let i = 1; i <= a.length; i++) {
-      const indicator = a[i - 1] === b[j - 1] ? 0 : 1;
-      m[j][i] = Math.min(
-        m[j][i - 1] + 1,
-        m[j - 1][i] + 1,
-        m[j - 1][i - 1] + indicator
-      );
+// Levenshtein distance
+function levenshteinDistance(a,b){
+  const m = Array(b.length+1).fill(null).map(() => Array(a.length+1).fill(null));
+  for(let i=0; i <= a.length; i++) m[0][i] = i;
+  for(let j=0; j <= b.length; j++) m[j][0] = j;
+  for(let j=1; j <= b.length; j++){
+    for(let i=1; i <= a.length; i++){
+      const indicator = a[i-1] === b[j-1] ? 0 : 1;
+      m[j][i] = Math.min(m[j][i-1] + 1, m[j-1][i] + 1, m[j-1][i-1] + indicator);
     }
   }
   return m[b.length][a.length];
 }
 
-function appendError(el, msg) {
+function appendError(el, msg){
   el.innerHTML = `<p class="text-red-600 font-bold flex items-center gap-1 select-text"><span data-feather="alert-triangle"></span>${msg}</p>`;
   feather.replace();
 }
 
-// Clear buttons behavior
+// Clear buttons behaviour
 clearTranscriptionButton.onclick = () => {
   setTranscriptionText("");
   compareButton.disabled = true;
@@ -314,22 +296,22 @@ clearManualInputButton.onclick = () => {
   compareButton.classList.add('opacity-50', 'cursor-not-allowed');
   compareButton.setAttribute('aria-disabled', 'true');
 };
+
+// Update manual word count and enable compare button if conditions met
 manualInput.addEventListener('input', () => {
   updateManualWordCount();
-  const enabled = manualInput.value.trim() && transcribedText;
+  let enabled = manualInput.value.trim() && transcribedText;
   compareButton.disabled = !enabled;
   compareButton.classList.toggle('opacity-50', !enabled);
   compareButton.classList.toggle('cursor-not-allowed', !enabled);
   compareButton.setAttribute('aria-disabled', !enabled ? 'true' : 'false');
 });
+
+// Start and stop recording buttons
 startButton.onclick = startRecording;
 stopButton.onclick = stopRecording;
 
-// About modal open/close
-const openAboutBtn = document.getElementById('openAboutBtn');
-const aboutModal = document.getElementById('aboutModal');
-const closeAbout = document.getElementById('closeAbout');
-
+// About modal open/close events
 openAboutBtn.onclick = () => {
   aboutModal.classList.remove('opacity-0', 'pointer-events-none');
   aboutModal.setAttribute('aria-hidden', 'false');
@@ -344,17 +326,20 @@ closeAbout.onclick = () => {
     aboutModal.setAttribute('aria-hidden', 'true');
   }, 200);
 };
-aboutModal.addEventListener('click', e => {
-  if (e.target === aboutModal) closeAbout.onclick();
+aboutModal.addEventListener('click', (e) => {
+  if(e.target === aboutModal) {
+    closeAbout.onclick();
+  }
 });
 
-// Copy/download buttons
+// Copy & Download Buttons
 copyTranscriptionBtn.onclick = () => {
-  if (!transcribedText.trim()) return alert("No transcription to copy.");
+  if(!transcribedText.trim()) return alert("No transcription to copy.");
   navigator.clipboard.writeText(transcribedText).then(() => alert("Transcription copied to clipboard!"));
 };
+
 downloadTranscriptionBtn.onclick = () => {
-  if (!transcribedText.trim()) return alert("No transcription to download.");
+  if(!transcribedText.trim()) return alert("No transcription to download.");
   const blob = new Blob([transcribedText], { type: 'text/plain' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -365,139 +350,83 @@ downloadTranscriptionBtn.onclick = () => {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 };
+
 copyComparisonBtn.onclick = () => {
   const compText = comparisonResult.innerText.trim();
-  if (!compText) return alert("No comparison result to copy.");
+  if(!compText) return alert("No comparison result to copy.");
   navigator.clipboard.writeText(compText).then(() => alert("Comparison result copied to clipboard!"));
 };
 
-// Notes persistence
+// Notes persistence in localStorage
 const NOTES_STORAGE_KEY = 'whisperAnalyzerNotes';
 function loadNotes() {
   const saved = localStorage.getItem(NOTES_STORAGE_KEY);
-  if (saved) notesInput.value = saved;
+  if(saved) notesInput.value = saved;
 }
 function saveNotes() {
   localStorage.setItem(NOTES_STORAGE_KEY, notesInput.value);
 }
+loadNotes();
 notesInput.addEventListener('input', saveNotes);
 
-// Custom table implementation
+// CUSTOM TABLE IMPLEMENTATION
+// Initialize table with 3x3
 let tableRowCount = 3;
 let tableColCount = 3;
 
-function createCell(row, col) {
+function createCell(row, col){
   const td = document.createElement('td');
   td.contentEditable = "true";
   td.className = "editable-cell";
   td.dataset.row = row;
   td.dataset.col = col;
   td.addEventListener('paste', e => {
+    // Prevent paste styling
     e.preventDefault();
     const text = e.clipboardData.getData('text/plain');
     document.execCommand('insertText', false, text);
   });
   return td;
 }
-function renderTable() {
-  const tbody = customTable.querySelector('tbody');
+
+function renderTable(){
+  const tbody = customTable.querySelector("tbody");
   tbody.innerHTML = "";
-  for (let r = 0; r < tableRowCount; r++) {
+  for(let r=0; r < tableRowCount; r++){
     const tr = document.createElement('tr');
-    for (let c = 0; c < tableColCount; c++) {
-      tr.appendChild(createCell(r, c));
+    for(let c=0; c < tableColCount; c++){
+      tr.appendChild(createCell(r,c));
     }
     tbody.appendChild(tr);
   }
 }
 renderTable();
 
-addRowBtn.onclick = () => { tableRowCount++; renderTable(); };
-removeRowBtn.onclick = () => { if (tableRowCount > 1) { tableRowCount--; renderTable(); } };
-addColBtn.onclick = () => { tableColCount++; renderTable(); };
-removeColBtn.onclick = () => { if (tableColCount > 1) { tableColCount--; renderTable(); } };
-
-// Load history (protected)
-function loadHistory() {
-  const token = ensureAuthenticated();
-  if (!token) return;
-  fetch('/api/history?limit=10', {
-    headers: { 'Authorization': `Bearer ${token}` }
-  }).then(response => {
-    if (response.status === 401 || response.status === 403) {
-      localStorage.removeItem('access_token');
-      window.location.href = '/login';
-      return;
-    }
-    if (!response.ok) throw new Error('Failed to fetch');
-    return response.json();
-  }).then(data => renderHistory(data))
-    .catch(err => {
-      tbody.innerHTML = `<tr><td colspan="5" class="text-center text-red-600 p-4">Error loading history</td></tr>`;
-      console.error(err);
-    });
-}
-
-// Render history table data
-function renderHistory(entries) {
-  tbody.innerHTML = "";
-  if (!entries.length) {
-    tbody.innerHTML = `<tr><td colspan="5" class="text-center italic p-4">No past transcriptions yet.</td></tr>`;
-    return;
+// Add row
+addRowBtn.onclick = () => {
+  tableRowCount++;
+  renderTable();
+};
+// Remove row
+removeRowBtn.onclick = () => {
+  if(tableRowCount > 1) {
+    tableRowCount--;
+    renderTable();
   }
-  entries.forEach(entry => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td class="px-2 py-1 border border-gray-300 dark:border-gray-600">${new Date(entry.timestamp).toLocaleString()}</td>
-      <td class="px-2 py-1 border border-gray-300 dark:border-gray-600">${escapeHtml(entry.transcript)}</td>
-      <td class="px-2 py-1 border border-gray-300 dark:border-gray-600">${escapeHtml(entry.manual || "")}</td>
-      <td class="px-2 py-1 border border-gray-300 dark:border-gray-600">${(entry.score ?? 0).toFixed(2)}</td>
-      <td class="px-2 py-1 border border-gray-300 dark:border-gray-600 text-center">
-        <button class="delete-history-btn" data-id="${entry.id}">Delete</button>
-      </td>
-    `;
-    tbody.appendChild(tr);
-  });
-  feather.replace();
-}
-
-// Delete history handler (event delegation)
-tbody.addEventListener('click', async (e) => {
-  if (e.target.classList.contains('delete-history-btn')) {
-    const id = e.target.getAttribute('data-id');
-    if (confirm('Are you sure you want to delete this record?')) {
-      try {
-        const token = ensureAuthenticated();
-        if (!token) return;
-        const res = await fetch(`/api/history/${id}`, {
-          method: 'DELETE',
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (res.status === 401 || res.status === 403) {
-          localStorage.removeItem('access_token');
-          window.location.href = '/login';
-          return;
-        }
-        if (res.ok) {
-          loadHistory();
-        } else {
-          alert('Delete failed');
-        }
-      } catch (err) {
-        alert('Network error');
-      }
-    }
+};
+// Add col
+addColBtn.onclick = () => {
+  tableColCount++;
+  renderTable();
+};
+// Remove col
+removeColBtn.onclick = () => {
+  if(tableColCount > 1){
+    tableColCount--;
+    renderTable();
   }
-});
+};
 
-document.addEventListener('DOMContentLoaded', () => {
-  if (!localStorage.getItem('access_token')) {
-    window.location.href = '/login';
-    return;
-  }
-  feather.replace();
-  loadHistory();
-  loadNotes();
-});
-
-
+// Initialize word counts on load
+updateTranscriptionWordCount();
+updateManualWordCount();

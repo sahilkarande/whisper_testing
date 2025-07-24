@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Whisper Full Screen Analyzer</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: { extend: {} }
+    }
+  </script>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet" />
+
+  <!-- Feather Icons -->
+  <script src="https://unpkg.com/feather-icons"></script>
+
+  <!-- External CSS -->
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+
+<body class="dark:bg-gray-900 transition-colors duration-500">
+  <div id="app-root" class="w-screen h-screen max-w-screen overflow-hidden">
+
+    <!-- Header -->
+    <header class="flex items-center justify-between w-full px-8 pt-8 select-none">
+      <h1
+        class="text-4xl sm:text-5xl font-black bg-clip-text text-transparent bg-gradient-to-br from-indigo-700 via-violet-500 to-pink-500 tracking-tight drop-shadow flex items-center gap-2"
+      >
+        <span data-feather="mic" class="inline"></span>
+        Whisper Analyzer
+        <span class="text-[18px] text-violet-600 dark:text-violet-300 font-semibold ml-2 select-text">by Sahil</span>
+      </h1>
+
+      <div class="flex gap-3">
+        <button id="openAboutBtn" aria-label="About app"
+          class="bg-white/60 dark:bg-gray-700/60 hover:bg-white/90 dark:hover:bg-gray-700/90 text-violet-800 dark:text-violet-300 px-3 py-2 rounded-xl font-medium shadow transition inline-flex items-center gap-1">
+          <span data-feather="info" class="w-5 h-5"></span>
+          <span class="hidden sm:inline">About</span>
+        </button>
+        <button id="toggleSettings" aria-label="Toggle settings sidebar"
+          class="bg-white/60 dark:bg-gray-700/60 hover:bg-white/90 dark:hover:bg-gray-700/90 text-violet-800 dark:text-violet-300 px-3 py-2 rounded-xl font-medium shadow transition inline-flex items-center gap-1">
+          <span data-feather="settings" class="w-5 h-5"></span>
+          <span class="hidden sm:inline">Settings</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col md:flex-row items-stretch justify-center w-full max-w-[1800px] mx-auto mt-6 gap-6 px-9 pb-6 overflow-auto min-h-0">
+      <!-- Controls & analysis section -->
+      <section
+        class="flex-1 flex flex-col max-w-2xl w-full mx-auto glassify p-8 gap-8 shadow-lg overflow-hidden relative min-h-0"
+        style="max-width: 92rem;"
+        >
+
+
+        <!-- Status Bar + Timer-->
+        <div class="flex flex-row items-center justify-between gap-2 mb-2 select-text">
+          <span id="status" class="text-base text-gray-600 dark:text-gray-300 font-medium flex items-center gap-2">
+            <span data-feather="circle"></span>
+            Press <b>"Start Recording"</b> to begin.
+          </span>
+          <span id="timer" class="text-sm text-gray-500 dark:text-gray-400 font-mono select-none" aria-live="polite" aria-atomic="true"></span>
+        </div>
+
+        <!-- Recorder Controls -->
+        <div class="flex gap-4 w-full select-none" role="region" aria-label="Audio recording controls">
+          <button id="startButton"
+            class="flex-1 bg-gradient-to-r from-blue-600 to-violet-600 text-white font-bold py-3 rounded-xl shadow-lg hover:scale-105 transition-all flex items-center gap-2 justify-center focus:outline-none focus:ring-4 focus:ring-blue-400"
+            type="button" aria-pressed="false">
+            <span data-feather="mic" class="w-5 h-5"></span>
+            Start Recording
+          </button>
+          <button id="stopButton"
+            class="flex-1 bg-gradient-to-r from-red-600 to-pink-600 text-white font-bold py-3 rounded-xl shadow-lg hover:scale-105 transition-all flex items-center gap-2 justify-center opacity-50 cursor-not-allowed focus:outline-none focus:ring-4 focus:ring-red-400"
+            type="button" aria-pressed="false" disabled>
+            <span data-feather="square" class="w-5 h-5"></span>
+            Stop
+          </button>
+        </div>
+
+        <!-- Audio Playback -->
+        <div id="audioSection" class="flex items-center gap-4 mt-1 select-text" style="display: none;" aria-live="polite">
+          <audio id="audioPlayer" controls class="w-full bg-gray-50 dark:bg-gray-700 rounded-lg shadow"></audio>
+          <button id="deleteAudioBtn" class="text-red-400 hover:text-red-600 focus:outline-none" title="Delete recording" aria-label="Delete recording">
+            <span data-feather="trash-2" class="w-6 h-6"></span>
+          </button>
+        </div>
+
+        <!-- Transcription Output -->
+        <div
+          class="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-5 shadow-inner flex flex-col gap-1 select-text focus-within:ring-2 focus-within:ring-indigo-500 min-h-[180px]"
+        >
+          <div class="flex justify-between items-center mb-1">
+            <h2 class="text-xl font-semibold text-indigo-700 dark:text-indigo-400 flex items-center gap-2 select-text">
+              <span data-feather="activity"></span>
+              Transcription
+            </h2>
+            <div class="flex gap-2">
+              <button id="copyTranscriptionBtn" class="text-indigo-600 hover:underline text-sm flex items-center gap-1 select-none" aria-label="Copy transcription">
+                <span data-feather="copy" class="w-4 h-4"></span> Copy
+              </button>
+              <button id="downloadTranscriptionBtn" class="text-indigo-600 hover:underline text-sm flex items-center gap-1 select-none" aria-label="Download transcription as text file">
+                <span data-feather="download" class="w-4 h-4"></span> Download
+              </button>
+              <button id="clearTranscriptionButton"
+                class="text-xs bg-indigo-100 hover:bg-indigo-200 dark:bg-indigo-900 dark:hover:bg-indigo-800 text-indigo-700 dark:text-indigo-300 font-bold px-3 py-1 rounded-lg flex items-center gap-1 transition"
+                type="button" aria-label="Clear transcription">
+                <span data-feather="x-circle" class="w-4 h-4"></span>
+                Clear
+              </button>
+            </div>
+          </div>
+          <div id="transcriptionOutput"
+            class="text-gray-900 dark:text-gray-100 min-h-[100px] max-h-[100px] bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded px-3 py-2 overflow-y-auto text-sm sm:text-base select-text"
+            tabindex="0" aria-live="polite" aria-atomic="true"
+          >
+            <p class="text-gray-400 dark:text-gray-500 italic select-text">Your final transcription will appear here.</p>
+          </div>
+          <div id="transcriptionWordCount" class="text-xs text-indigo-600 dark:text-indigo-400 text-right" aria-live="polite" aria-atomic="true">Words: 0</div>
+        </div>
+
+        <!-- Manual Input and Compare -->
+        <div
+          class="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-5 shadow-inner flex flex-col gap-1 select-text focus-within:ring-2 focus-within:ring-teal-500 min-h-[220px]"
+        >
+          <div class="flex justify-between items-center mb-1">
+            <h2 class="text-xl font-semibold text-teal-700 dark:text-teal-400 flex items-center gap-2 select-text">
+              <span data-feather="edit"></span>
+              Manual Input
+            </h2>
+            <button id="clearManualInputButton"
+              class="text-xs bg-teal-100 hover:bg-teal-200 dark:bg-teal-900 dark:hover:bg-teal-800 text-teal-700 dark:text-teal-300 font-bold px-3 py-1 rounded-lg flex items-center gap-1 transition"
+              type="button" aria-label="Clear manual input">
+              <span data-feather="x-circle" class="w-4 h-4"></span>
+              Clear
+            </button>
+          </div>
+          <textarea id="manualInput"
+            class="w-full resize-none p-3 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-teal-400 focus:border-teal-600 transition text-sm sm:text-base bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+            rows="5" placeholder="Type or paste the expected transcript for comparison..." aria-label="Manual transcript input"></textarea>
+          <div id="manualWordCount" class="text-xs text-teal-600 dark:text-teal-400 text-right" aria-live="polite" aria-atomic="true">Words: 0</div>
+          <button id="compareButton"
+            class="w-full mt-2 bg-gradient-to-r from-green-500 to-teal-500 text-white font-bold py-2 rounded-lg shadow hover:scale-105 transition focus:outline-none focus:ring-4 focus:ring-green-400 flex items-center gap-2 justify-center opacity-50 cursor-not-allowed"
+            type="button" disabled aria-disabled="true">
+            <span data-feather="zoom-in"></span>
+            Compare
+          </button>
+
+          <!-- Comparison Result -->
+          <div id="comparisonSection"
+            class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-5 shadow-lg mt-4 flex-col gap-3 select-text hidden"
+            tabindex="0" aria-live="polite" aria-atomic="true" aria-label="Comparison results">
+            <h2 class="text-xl font-semibold text-orange-600 dark:text-orange-400 flex items-center gap-2 mb-2 select-text">
+              <span data-feather="bar-chart-2"></span>
+              Comparison
+            </h2>
+            <div id="comparisonResult"
+              class="min-h-[60px] max-h-[150px] bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-3 rounded-md text-base overflow-y-auto"></div>
+            <div class="flex gap-3 mt-1 text-sm select-none">
+              <span class="match px-2 py-0.5 rounded-lg">Correct</span>
+              <span class="mismatch px-2 py-0.5 rounded-lg">Incorrect/Missing</span>
+              <span class="insertion px-2 py-0.5 rounded-lg">Manual Only</span>
+            </div>
+            <div class="flex justify-end gap-2 mt-1">
+              <button id="copyComparisonBtn" class="text-orange-600 hover:underline text-sm select-none flex items-center gap-1" aria-label="Copy comparison result">
+                <span data-feather="copy" class="inline w-4 h-4"></span> Copy Comparison
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Side cards: History, Notes & Custom Table -->
+      <aside class="flex-1 flex flex-col gap-6 max-w-md w-full glassify p-6 shadow-lg overflow-auto relative select-text min-h-0">
+
+        <!-- History -->
+        <div class="bg-white/90 dark:bg-gray-800/90 rounded-xl border border-gray-300 dark:border-gray-700 p-5 max-h-[130px] overflow-y-auto flex flex-col">
+          <h3 class="text-xl font-semibold text-indigo-700 dark:text-indigo-400 mb-3 flex items-center gap-2 select-text">
+            <span data-feather="clock"></span> History
+          </h3>
+          <ul id="historyList" class="text-gray-700 dark:text-gray-300 text-base space-y-1 overflow-y-auto flex-1"
+            role="list" aria-label="History of previous transcriptions and comparisons"
+            tabindex="0">
+            <li class="italic text-gray-400 dark:text-gray-500 select-text">No past transcriptions yet.</li>
+          </ul>
+        </div>
+
+        <!-- Notes Section -->
+        <div class="bg-white/90 dark:bg-gray-800/90 rounded-xl border border-gray-300 dark:border-gray-700 p-5 max-h-[180px] overflow-y-auto flex flex-col">
+          <h3 class="text-xl font-semibold text-purple-700 dark:text-purple-400 mb-3 flex items-center gap-2 select-text">
+            <span data-feather="file-text"></span> Notes
+          </h3>
+          <textarea id="notesInput" class="resize-none p-3 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-purple-400 focus:border-purple-600 transition text-sm sm:text-base bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 flex-1"
+            rows="6" placeholder="Write your notes here..." aria-label="Notes input"></textarea>
+        </div>
+
+        <!-- Custom Table Section -->
+        <div class="bg-white/90 dark:bg-gray-800/90 rounded-xl border border-gray-300 dark:border-gray-700 p-5 overflow-y-auto flex flex-col min-h-[260px]">
+          <h3 class="text-xl font-semibold text-blue-700 dark:text-blue-400 mb-3 flex items-center gap-2 select-text">
+            <span data-feather="grid"></span> Data Table
+          </h3>
+          <div class="overflow-auto mb-3" id="customTableArea" style="max-height: 180px;">
+            <table id="customTable" class="border-collapse w-full table-fixed text-center select-text">
+              <tbody></tbody>
+            </table>
+          </div>
+          <div class="flex gap-2 justify-between">
+            <div class="flex gap-2">
+              <button id="addRowBtn" class="px-3 py-1 rounded bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                Add Row
+              </button>
+              <button id="removeRowBtn" class="px-3 py-1 rounded bg-indigo-400 hover:bg-indigo-500 text-white text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-300">
+                Remove Row
+              </button>
+            </div>
+            <div class="flex gap-2">
+              <button id="addColBtn" class="px-3 py-1 rounded bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                Add Column
+              </button>
+              <button id="removeColBtn" class="px-3 py-1 rounded bg-indigo-400 hover:bg-indigo-500 text-white text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-300">
+                Remove Column
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Settings (togglable) -->
+        <div id="settingsPanel" class="bg-white/90 dark:bg-gray-800/90 rounded-xl border border-gray-300 dark:border-gray-700 p-5 max-h-[140px] overflow-y-auto hidden">
+          <h3 class="text-xl font-semibold text-teal-700 dark:text-teal-400 mb-3 flex items-center gap-2 select-text">
+            <span data-feather="toggle-right"></span> Settings
+          </h3>
+          <label class="flex items-center gap-3 cursor-pointer select-none">
+            <input type="checkbox" id="darkModeToggle"
+              class="accent-violet-600 h-5 w-5 dark:accent-violet-400" aria-checked="false" role="switch" />
+            <span class="text-gray-900 dark:text-gray-100 font-semibold text-base">Dark Mode</span>
+          </label>
+        </div>
+      </aside>
+    </main>
+
+    <!-- About Modal -->
+    <div id="aboutModal" tabindex="-1"
+      class="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 transition-opacity opacity-0 pointer-events-none"
+      aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="aboutModalTitle"
+    >
+      <div
+        class="glassify max-w-md w-full p-6 border-2 border-indigo-100 shadow-xl relative rounded-xl transform scale-95 opacity-0 transition duration-200"
+      >
+        <button id="closeAbout"
+          class="absolute top-3 right-3 text-gray-400 dark:text-gray-300 hover:text-indigo-400 transition focus:outline-none"
+          aria-label="Close About modal"
+        >
+          <span data-feather="x" class="w-6 h-6"></span>
+        </button>
+        <h2 id="aboutModalTitle"
+          class="text-2xl font-extrabold text-indigo-700 dark:text-indigo-400 mb-4 flex items-center gap-2 select-text"
+        >
+          <span data-feather="info"></span>
+          About
+        </h2>
+        <div class="text-gray-700 dark:text-gray-300 leading-relaxed space-y-3 select-text">
+          <p>
+            <strong>Whisper Full Screen Analyzer</strong> lets you
+            <span class="text-indigo-600 dark:text-indigo-300 font-semibold">record, transcribe</span>, and
+            <span class="text-teal-700 dark:text-teal-400 font-semibold">compare</span> your voice to a reference with
+            powerful match highlighting.
+          </p>
+          <p>
+            Enjoy a modern, immersive, full-screen experience — works across all modern devices. Audio is processed
+            securely and never stored beyond the session.
+          </p>
+        </div>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-6 select-text">
+          Powered by <b>OpenAI Whisper</b> model + Tailwind CSS.
+        </p>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer
+      class="w-full py-4 text-center text-xs text-violet-400 select-none border-t border-violet-100 bg-white/60 dark:bg-gray-900 dark:text-violet-300 dark:border-gray-700"
+    >
+      <span data-feather="codesandbox" class="inline-block align-text-bottom"></span> made with Whisper + Tailwind &ndash; 2025
+    </footer>
+  </div>
+
+  <!-- External JS -->
+  <script src="/static/script.js"></script>
+</body>
+</html>
