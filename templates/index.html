@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Therapy Connect - Advanced Analysis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    animation: {
+                        'gradient': 'gradient 8s ease infinite',
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'bounce-slow': 'bounce 2s infinite',
+                        'wiggle': 'wiggle 1s ease-in-out infinite',
+                        'fadeIn': 'fadeIn 0.5s ease-in-out',
+                        'slideUp': 'slideUp 0.3s ease-out',
+                    },
+                    keyframes: {
+                        gradient: {
+                            '0%, 100%': {
+                                'background-size': '200% 200%',
+                                'background-position': 'left center'
+                            },
+                            '50%': {
+                                'background-size': '200% 200%',
+                                'background-position': 'right center'
+                            },
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-20px)' },
+                        },
+                        wiggle: {
+                            '0%, 100%': { transform: 'rotate(-3deg)' },
+                            '50%': { transform: 'rotate(3deg)' },
+                        },
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        slideUp: {
+                            '0%': { transform: 'translateY(10px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' },
+                        }
+                    },
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+    <script src="https://unpkg.com/feather-icons"></script>
+    <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body class="dark:bg-gray-900 transition-all duration-700 overflow-x-hidden">
+    <!-- Animated Background -->
+    <div class="fixed inset-0 -z-10">
+        <div class="absolute inset-0 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-blue-900 dark:to-purple-900"></div>
+        <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%239C92AC" fill-opacity="0.05"%3E%3Ccircle cx="30" cy="30" r="4"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-40"></div>
+        <!-- Floating orbs -->
+        <div class="absolute top-20 left-20 w-72 h-72 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-float"></div>
+        <div class="absolute top-40 right-20 w-72 h-72 bg-gradient-to-r from-yellow-400 to-red-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-float" style="animation-delay: 2s;"></div>
+        <div class="absolute -bottom-8 left-40 w-72 h-72 bg-gradient-to-r from-blue-400 to-indigo-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-float" style="animation-delay: 4s;"></div>
+    </div>
+
+    <div id="app-root" class="min-h-screen flex flex-col relative">
+        <!-- Header -->
+        <header class="relative z-10 flex items-center justify-between w-full px-8 pt-8 pb-4">
+            <div class="flex items-center gap-4">
+                <div class="relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-violet-600 to-purple-600 rounded-2xl blur opacity-75 animate-pulse-slow"></div>
+                    <div class="relative bg-white dark:bg-gray-800 p-3 rounded-2xl shadow-xl">
+                        <span data-feather="mic" class="w-8 h-8 text-violet-600 dark:text-violet-400"></span>
+                    </div>
+                </div>
+                <div>
+                    <h1 class="text-4xl sm:text-6xl font-black bg-clip-text text-transparent bg-gradient-to-r from-violet-600 via-purple-600 to-pink-600 tracking-tight animate-gradient">
+                        Therapy Connect
+                    </h1>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 font-medium mt-1">Advanced Analysis & Comparison</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <button id="openAboutBtn" type="button" aria-label="About Therapy Connect"
+                    class="group relative overflow-hidden bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-700 text-violet-700 dark:text-violet-300 p-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-white/20 dark:border-gray-700/50 flex items-center">
+                    <div class="absolute inset-0 bg-gradient-to-r from-violet-600/10 to-purple-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div class="relative flex items-center gap-2">
+                        <span data-feather="info" class="w-5 h-5"></span>
+                        <span class="hidden sm:inline">About</span>
+                    </div>
+                </button>
+                <button id="darkModeToggle" type="button" aria-label="Toggle dark mode"
+                    class="group relative overflow-hidden bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-700 text-violet-700 dark:text-violet-300 p-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-white/20 dark:border-gray-700/50 flex items-center">
+                    <div class="absolute inset-0 bg-gradient-to-r from-violet-600/10 to-purple-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div class="relative flex items-center">
+                        <span data-feather="sun" class="w-5 h-5 dark:hidden"></span>
+                        <span data-feather="moon" class="w-5 h-5 hidden dark:inline"></span>
+                    </div>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="flex-1 flex flex-col lg:flex-row items-start justify-center w-full max-w-[1800px] mx-auto mt-6 gap-8 px-8 pb-8 relative z-10">
+            <!-- Left Panel -->
+            <section class="flex-1 max-w-4xl">
+                <div class="neo-card p-8 space-y-8">
+                    <!-- Status Bar -->
+                    <div class="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-700 rounded-2xl border border-blue-100 dark:border-gray-600">
+                        <div class="flex items-center gap-3">
+                            <div class="relative">
+                                <div id="status-indicator" class="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+                                <div class="absolute inset-0 w-3 h-3 bg-green-400 rounded-full animate-ping opacity-75"></div>
+                            </div>
+                            <span id="status" class="text-gray-700 dark:text-gray-200 font-medium">
+                                Ready to transcribe your audio
+                            </span>
+                        </div>
+                        <!-- Dual Timer Display -->
+                        <div class="flex items-center gap-4">
+                            <!-- Recording Timer -->
+                            <div class="flex items-center gap-2">
+                                <span data-feather="mic" class="w-4 h-4 text-red-500"></span>
+                                <span id="recordingTimer" class="text-sm text-gray-600 dark:text-gray-400 font-mono bg-white dark:bg-gray-800 px-3 py-1 rounded-lg border border-red-200 dark:border-red-800">
+                                    0:00
+                                </span>
+                            </div>
+                            <!-- Processing Timer -->
+                            <div class="flex items-center gap-2">
+                                <span data-feather="cpu" class="w-4 h-4 text-yellow-500"></span>
+                                <span id="processingTimer" class="text-sm text-gray-600 dark:text-gray-400 font-mono bg-white dark:bg-gray-800 px-3 py-1 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                                    0:00
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recording Controls -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <button id="startButton" class="group relative overflow-hidden bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold py-4 px-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
+                            <div class="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                            <div class="relative flex items-center justify-center gap-3">
+                                <div class="p-2 bg-white/20 rounded-full">
+                                    <span data-feather="mic" class="w-6 h-6"></span>
+                                </div>
+                                <span class="text-lg">Start Recording</span>
+                            </div>
+                        </button>
+                        
+                        <button id="stopButton" class="group relative overflow-hidden bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white font-bold py-4 px-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 opacity-50 cursor-not-allowed" disabled>
+                            <div class="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                            <div class="relative flex items-center justify-center gap-3">
+                                <div class="p-2 bg-white/20 rounded-full">
+                                    <span data-feather="square" class="w-6 h-6"></span>
+                                </div>
+                                <span class="text-lg">Stop Recording</span>
+                            </div>
+                        </button>
+                    </div>
+
+                    <!-- Audio Playback -->
+                    <div id="audioSection" class="hidden">
+                        <div class="neo-card-inner p-6">
+                            <div class="flex items-center gap-4">
+                                <div class="flex-1">
+                                    <audio id="audioPlayer" controls class="w-full h-12 rounded-xl shadow-inner"></audio>
+                                </div>
+                                <button id="deleteAudioBtn" class="group p-3 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/40 text-red-500 hover:text-red-600 rounded-xl transition-all duration-300 hover:scale-110">
+                                    <span data-feather="trash-2" class="w-5 h-5 group-hover:animate-wiggle"></span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Transcription Output -->
+                    <div class="neo-card-inner">
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 flex items-center gap-3">
+                                <div class="p-2 bg-gradient-to-r from-indigo-100 to-purple-100 dark:from-indigo-900 dark:to-purple-900 rounded-xl">
+                                    <span data-feather="activity" class="w-6 h-6 text-indigo-600 dark:text-indigo-400"></span>
+                                </div>
+                                Transcription
+                            </h2>
+                            <div class="flex gap-2">
+                                <button id="copyTranscriptionBtn" class="action-btn action-btn-primary">
+                                    <span data-feather="copy" class="w-4 h-4"></span>
+                                    Copy
+                                </button>
+                                <button id="downloadTranscriptionBtn" class="action-btn action-btn-secondary">
+                                    <span data-feather="download" class="w-4 h-4"></span>
+                                    Download
+                                </button>
+                                <button id="clearTranscriptionButton" class="action-btn action-btn-danger">
+                                    <span data-feather="x-circle" class="w-4 h-4"></span>
+                                    Clear
+                                </button>
+                            </div>
+                        </div>
+                        <div id="transcriptionOutput" class="min-h-[120px] max-h-[200px] bg-gradient-to-br from-gray-50 to-white dark:from-gray-800 dark:to-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-xl p-4 overflow-y-auto text-gray-800 dark:text-gray-200 shadow-inner scrollbar-thin">
+                            <p class="text-gray-400 dark:text-gray-500 italic flex items-center gap-2">
+                                <span data-feather="mic-off" class="w-4 h-4"></span>
+                                Your transcription will appear here...
+                            </p>
+                        </div>
+                        <div class="flex items-center justify-between mt-2">
+                            <div id="transcriptionWordCount" class="text-sm text-indigo-600 dark:text-indigo-400 font-medium">
+                                Words: 0
+                            </div>
+                            <!-- Submit Button -->
+                            <button id="submitTranscriptionBtn" class="group relative overflow-hidden bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600 text-white font-bold py-2 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none" disabled>
+                                <div class="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                <div class="relative flex items-center gap-2">
+                                    <span data-feather="save" class="w-4 h-4"></span>
+                                    <span>Submit Transcription</span>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Success Message -->
+                    <div id="successMessage" class="hidden neo-card-inner bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-green-200 dark:border-green-800">
+                        <div class="flex items-center gap-3 p-4">
+                            <div class="flex-shrink-0">
+                                <div class="w-8 h-8 bg-green-100 dark:bg-green-900/50 rounded-full flex items-center justify-center">
+                                    <span data-feather="check" class="w-5 h-5 text-green-600 dark:text-green-400"></span>
+                                </div>
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="text-lg font-semibold text-green-800 dark:text-green-200">Success!</h3>
+                                <p class="text-sm text-green-700 dark:text-green-300">Your transcription has been saved successfully.</p>
+                            </div>
+                            <button id="closeSuccessMessage" class="flex-shrink-0 p-1 text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-200 transition-colors duration-200">
+                                <span data-feather="x" class="w-4 h-4"></span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Manual Input -->
+
+
+                    <!-- Comparison Results -->
+
+                </div>
+            </section>
+
+            <!-- Right Panel -->
+            <aside class="w-full lg:w-96">
+                <div class="neo-card p-6 space-y-6">
+                    <!-- Timer Statistics -->
+                    <div>
+                        <h3 class="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 flex items-center gap-3 mb-4">
+                            <div class="p-2 bg-gradient-to-r from-blue-100 to-indigo-100 dark:from-blue-900 dark:to-indigo-900 rounded-xl">
+                                <span data-feather="clock" class="w-5 h-5 text-blue-600 dark:text-blue-400"></span>
+                            </div>
+                            Session Stats
+                        </h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center p-3 bg-gradient-to-r from-red-50 to-pink-50 dark:from-red-900/20 dark:to-pink-900/20 rounded-lg">
+                                <span class="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                                    <span data-feather="mic" class="w-4 h-4 text-red-500"></span>
+                                    Total Recording Time
+                                </span>
+                                <span id="totalRecordingTime" class="text-sm font-mono font-bold text-red-600 dark:text-red-400">0:00</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 rounded-lg">
+                                <span class="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                                    <span data-feather="cpu" class="w-4 h-4 text-yellow-500"></span>
+                                    Total Processing Time
+                                </span>
+                                <span id="totalProcessingTime" class="text-sm font-mono font-bold text-yellow-600 dark:text-yellow-400">0:00</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-lg">
+                                <span class="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                                    <span data-feather="activity" class="w-4 h-4 text-green-500"></span>
+                                    Sessions Completed
+                                </span>
+                                <span id="sessionsCompleted" class="text-sm font-mono font-bold text-green-600 dark:text-green-400">0</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-900/20 dark:to-purple-900/20 rounded-lg">
+                                <span class="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                                    <span data-feather="save" class="w-4 h-4 text-violet-500"></span>
+                                    Transcriptions Saved
+                                </span>
+                                <span id="transcriptionsSaved" class="text-sm font-mono font-bold text-violet-600 dark:text-violet-400">0</span>
+                            </div>
+                        </div>
+                    </div>
+
+
+
+                    <!-- Notes -->
+                    <div>
+                        <h3 class="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-cyan-600 flex items-center gap-3 mb-4">
+                            <div class="p-2 bg-gradient-to-r from-teal-100 to-cyan-100 dark:from-teal-900 dark:to-cyan-900 rounded-xl">
+                                <span data-feather="file-text" class="w-5 h-5 text-teal-600 dark:text-teal-400"></span>
+                            </div>
+                            Notes
+                        </h3>
+                        <textarea id="notesInput" placeholder="Add your notes here..." class="w-full h-32 bg-gradient-to-br from-gray-50 to-white dark:from-gray-800 dark:to-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-xl p-4 resize-none text-gray-800 dark:text-gray-200 shadow-inner scrollbar-thin focus:border-teal-400 dark:focus:border-teal-500 focus:ring-4 focus:ring-teal-100 dark:focus:ring-teal-900 transition-all duration-300"></textarea>
+                    </div>
+                </div>
+            </aside>
+        </main>
+
+        <!-- About Modal -->
+        <div id="aboutModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm opacity-0 pointer-events-none transition-all duration-300">
+    <div class="neo-card max-w-md w-full mx-4 p-8 transform scale-95 opacity-0 transition-all duration-300" id="aboutModalContent">
+        <button id="closeAbout" class="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-300">
+            <span data-feather="x" class="w-5 h-5"></span>
+        </button>
+        <div class="text-center mb-6">
+            <div class="inline-flex p-4 bg-gradient-to-r from-violet-100 to-purple-100 dark:from-violet-900 dark:to-purple-900 rounded-2xl mb-4">
+                <span data-feather="info" class="w-8 h-8 text-violet-600 dark:text-violet-400"></span>
+            </div>
+            <h2 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-purple-600">
+                About Therapy Connect
+            </h2>
+        </div>
+        <div class="space-y-4 text-gray-600 dark:text-gray-300 leading-relaxed">
+            <p>
+                <strong class="text-violet-600 dark:text-violet-400">Therapy Connect</strong> is an advanced AI-powered transcription tool for therapy sessions.
+            </p>
+            <ul class="space-y-2 text-sm">
+                <li class="flex items-center gap-2">
+                    <span data-feather="mic" class="w-4 h-4 text-green-500"></span>
+                    <strong>Real-time:</strong> Live audio transcription
+                </li>
+                <li class="flex items-center gap-2">
+                    <span data-feather="clock" class="w-4 h-4 text-purple-500"></span>
+                    <strong>Dual Timers:</strong> Track recording and processing times
+                </li>
+                <li class="flex items-center gap-2">
+                    <span data-feather="save" class="w-4 h-4 text-violet-500"></span>
+                    <strong>Save & Submit:</strong> Store transcriptions securely
+                </li>
+                <li class="flex items-center gap-2">
+                    <span data-feather="copy" class="w-4 h-4 text-blue-500"></span>
+                    <strong>Export:</strong> Copy and download transcriptions
+                </li>
+            </ul>
+            <div class="bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-900/20 dark:to-purple-900/20 p-4 rounded-xl border border-violet-100 dark:border-violet-800">
+                <p class="text-sm text-violet-700 dark:text-violet-300">
+                    <strong>Powered by:</strong> OpenAI Whisper AI • Modern Web Technologies • Beautiful Design
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+        <!-- Footer -->
+        <footer class="relative z-10 w-full py-6 text-center border-t border-violet-100 dark:border-gray-700 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm">
+            <div class="flex items-center justify-center gap-2 text-violet-600 dark:text-violet-400">
+                <span data-feather="heart" class="w-4 h-4 text-red-500 animate-pulse"></span>
+                <span class="text-sm font-medium">Made with Whisper AI & Modern Design</span>
+                <span class="text-xs text-gray-500 dark:text-gray-400">© 2025</span>
+            </div>
+        </footer>
+    </div>
+
+    <script src="/static/script.js"></script>
+    <script>
+        feather.replace();
+    </script>
+</body>
+</html>
